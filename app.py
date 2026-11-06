@@ -1,16 +1,24 @@
-
 import os
+from dotenv import load_dotenv
 from flask import Flask, render_template, request, redirect
 from pymongo import MongoClient
 from bson import ObjectId
 from bson.errors import InvalidId
 
+load_dotenv()  # reads .env in this folder (local dev only; Render uses its own env vars)
+
 app = Flask(__name__)
 
 # Task 1: uses local MongoDB by default.
-# Task 2: on Render, set the MONGO_URI environment variable to your Atlas connection string.
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
+# Task 2: set MONGO_URI (or MONGODB_URI) to your Atlas connection string,
+#         in .env locally or as an environment variable on Render.
+MONGO_URI = (
+    os.environ.get("MONGO_URI")
+    or os.environ.get("MONGODB_URI")
+    or "mongodb://localhost:27017/"
+)
 client = MongoClient(MONGO_URI)
+print("Using MongoDB at:", MONGO_URI.split("@")[-1])  # host only, hides the password
 db = client["beginner_db"]
 todos_collection = db["todos"]
 
