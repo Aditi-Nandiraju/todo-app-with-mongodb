@@ -1,20 +1,147 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Flask & MongoDB Todo App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <style>
+        :root {
+            --bg: #f4f5f7;
+            --card: #ffffff;
+            --text: #1f2328;
+            --muted: #6b7280;
+            --border: #e5e7eb;
+            --accent: #4f46e5;
+            --accent-hover: #4338ca;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #111318;
+                --card: #1b1e25;
+                --text: #e6e8eb;
+                --muted: #9aa0a6;
+                --border: #2c313a;
+                --accent: #818cf8;
+                --accent-hover: #a5b4fc;
+            }
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            padding: 48px 16px;
+        }
+        .card {
+            width: 100%;
+            max-width: 480px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            align-self: flex-start;
+        }
+        h1 { margin: 0 0 4px; font-size: 1.5rem; }
+        .subtitle { margin: 0 0 24px; color: var(--muted); font-size: 0.9rem; }
+        form { display: flex; gap: 8px; margin-bottom: 24px; }
+        input {
+            flex: 1;
+            min-width: 0;
+            padding: 10px 14px;
+            font-size: 1rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg);
+            color: var(--text);
+        }
+        input:focus { outline: 2px solid var(--accent); outline-offset: -1px; border-color: transparent; }
+        button {
+            padding: 10px 18px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+        }
+        button:hover { background: var(--accent-hover); }
+        ul { list-style: none; margin: 0; padding: 0; }
+        li {
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            word-break: break-word;
+        }
+        form.inline { display: contents; margin: 0; }
+        .task { flex: 1; }
+        .check {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border: 2px solid var(--border);
+            border-radius: 50%;
+            background: transparent;
+            color: var(--muted);
+            font-size: 0.95rem;
+            line-height: 1;
+        }
+        .check:hover { background: transparent; border-color: #16a34a; color: #16a34a; }
+        li.done .check { background: #16a34a; border-color: #16a34a; color: #fff; }
+        li.done .task { text-decoration: line-through; color: var(--muted); }
+        .delete {
+            flex-shrink: 0;
+            padding: 6px 12px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: #dc2626;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        .delete:hover { background: #dc2626; border-color: #dc2626; color: #fff; }
+        .empty { text-align: center; color: var(--muted); padding: 24px 0; }
+        .count { margin-top: 16px; color: var(--muted); font-size: 0.85rem; text-align: right; }
+    </style>
 </head>
 <body>
-    <h2>Simple Todo App (Flask + MongoDB)</h2>
+    <main class="card">
+        <h1>My Tasks</h1>
+        <p class="subtitle">Flask + MongoDB</p>
 
-    <form action="/add" method="POST">
-        <input type="text" name="task" placeholder="Enter a new task..." required>
-        <button type="submit">Add Task</button>
-    </form>
+        <form action="/add" method="POST">
+            <input type="text" name="task" placeholder="What needs to be done?" required autofocus>
+            <button type="submit">Add</button>
+        </form>
 
-    <ul>
-        {% for todo in todos %}
-        <li>{{ todo.task }}</li>
-        {% endfor %}
-    </ul>
+        {% if todos %}
+        <ul>
+            {% for todo in todos %}
+            <li class="{{ 'done' if todo.done }}">
+                <form action="/toggle/{{ todo._id }}" method="POST" class="inline">
+                    <button type="submit" class="check" title="{{ 'Mark as not done' if todo.done else 'Mark as done' }}">✓</button>
+                </form>
+                <span class="task">{{ todo.task }}</span>
+                <form action="/delete/{{ todo._id }}" method="POST" class="inline">
+                    <button type="submit" class="delete" title="Delete task">Delete</button>
+                </form>
+            </li>
+            {% endfor %}
+        </ul>
+        {% set left = todos|rejectattr('done')|list|length %}
+        <p class="count">{{ left }} of {{ todos|length }} left</p>
+        {% else %}
+        <p class="empty">No tasks yet. Add one above.</p>
+        {% endif %}
+    </main>
 </body>
 </html>

@@ -1,6 +1,9 @@
+
 import os
 from flask import Flask, render_template, request, redirect
 from pymongo import MongoClient
+from bson import ObjectId
+from bson.errors import InvalidId
 
 app = Flask(__name__)
 
@@ -24,9 +27,32 @@ def add_todo():
     task = request.form.get("task")
     if task:
         # Insert a JSON-like document into MongoDB
-        todos_collection.insert_one({"task": task})
+        todos_collection.insert_one({"task": task, "done": False})
+    return redirect("/")
+
+
+@app.route("/toggle/<todo_id>", methods=["POST"])
+def toggle_todo(todo_id):
+    try:
+        oid = ObjectId(todo_id)
+    except InvalidId:
+        return redirect("/")
+    todo = todos_collection.find_one({"_id": oid})
+    if todo:
+        todos_collection.update_one(
+            {"_id": oid}, {"$set": {"done": not todo.get("done", False)}}
+        )
+    return redirect("/")
+
+
+@app.route("/delete/<todo_id>", methods=["POST"])
+def delete_todo(todo_id):
+    try:
+        todos_collection.delete_one({"_id": ObjectId(todo_id)})
+    except InvalidId:
+        pass
     return redirect("/")
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, use_reloader=False)
